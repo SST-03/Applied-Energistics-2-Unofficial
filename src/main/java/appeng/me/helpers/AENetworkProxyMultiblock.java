@@ -19,14 +19,14 @@ import com.google.common.collect.Iterators;
 
 import appeng.api.networking.IGridMultiblock;
 import appeng.api.networking.IGridNode;
+import appeng.core.AELog;
 import appeng.me.cluster.IAECluster;
 import appeng.me.cluster.IAEMultiBlock;
 import appeng.util.iterators.ProxyNodeIterator;
-import appeng.core.AELog;
 
 public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMultiblock {
 
-    //Wish this can fix Memory leak.
+    // Wish this can fix Memory leak.
     private static final WeakHashMap<AENetworkProxyMultiblock, IAEMultiBlock> Map = new WeakHashMap<AENetworkProxyMultiblock, IAEMultiBlock>();
 
     public AENetworkProxyMultiblock(final IGridProxyable te, final String nbtName, final ItemStack itemStack,
@@ -34,7 +34,7 @@ public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMul
         super(te, nbtName, itemStack, inWorld);
         Map.put(this, (IAEMultiBlock) te);
     }
-    
+
     @Override
     public Iterator<IGridNode> getMultiblockNodes() {
         if (this.getCluster() == null) {
@@ -47,7 +47,8 @@ public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMul
     private IAECluster getCluster() {
         IAEMultiBlock te = Map.get(this);
         if (te == null) {
-            AELog.error("[AppEng_Patch] Cannot get te from Map. Use this.getMachine() instead but this can cause memory leak.");
+            AELog.error(
+                "[AppEng_Patch] Cannot get te from Map. Use this.getMachine() instead but this can cause memory leak.");
             te = (IAEMultiBlock) this.getMachine();
         }
         return te.getCluster();
