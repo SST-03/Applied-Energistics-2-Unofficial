@@ -11,6 +11,7 @@
 package appeng.me.helpers;
 
 import java.util.Iterator;
+import java.util.HashMap;
 
 import net.minecraft.item.ItemStack;
 
@@ -21,14 +22,19 @@ import appeng.api.networking.IGridNode;
 import appeng.me.cluster.IAECluster;
 import appeng.me.cluster.IAEMultiBlock;
 import appeng.util.iterators.ProxyNodeIterator;
+import appeng.core.AELog;
 
 public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMultiblock {
+
+    //Wish this can fix Memory leak.
+    private static final HashMap<AENetworkProxyMultiblock, IGridProxyable> Map = new HashMap<AENetworkProxyMultiblock, IGridProxyable>();
 
     public AENetworkProxyMultiblock(final IGridProxyable te, final String nbtName, final ItemStack itemStack,
             final boolean inWorld) {
         super(te, nbtName, itemStack, inWorld);
+        Map.put(this, te);
     }
-
+    
     @Override
     public Iterator<IGridNode> getMultiblockNodes() {
         if (this.getCluster() == null) {
@@ -39,6 +45,11 @@ public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMul
     }
 
     private IAECluster getCluster() {
-        return ((IAEMultiBlock) this.getMachine()).getCluster();
+        IGridProxyable te = Map.get(this);
+        if (te == null) {
+            AELog.error("[AppEng_Patch] Cannot get te from Map. Use this.getMachine() instead but this can cause memory leak.");
+            te = this.getMachine();
+        }
+        return ((IAEMultiBlock) te).getCluster();
     }
 }
