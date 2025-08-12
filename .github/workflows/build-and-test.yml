@@ -3,7 +3,7 @@ name: Build and test
 permissions: write-all
 on:
     push:
-      branches: [ master, main ]
+      branches: [ master, main, daily80-patch ]
       
 jobs:
   build-and-test:
