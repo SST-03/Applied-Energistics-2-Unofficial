@@ -48,7 +48,7 @@ public class AENetworkProxyMultiblock extends AENetworkProxy implements IGridMul
         IAEMultiBlock te = Map.get(this);
         if (te == null) {
             AELog.error(
-                "[AppEng_Patch] Cannot get te from Map. Use this.getMachine() instead but this can cause memory leak.");
+                    "[AppEng_Patch] Cannot get te from Map. Use this.getMachine() instead but this can cause memory leak.");
             te = (IAEMultiBlock) this.getMachine();
         }
         return te.getCluster();
