@@ -58,7 +58,6 @@ public abstract class MBCalculator {
 
             if (this.checkMultiblockScale(min, max)) {
                 if (this.verifyUnownedRegion(world, min, max)) {
-                    IAECluster c = this.createCluster(world, min, max);
 
                     try {
                         if (!this.verifyInternalStructure(world, min, max)) {
@@ -71,8 +70,10 @@ public abstract class MBCalculator {
                     }
 
                     boolean updateGrid = false;
+                    IAECluster c;
                     final IAECluster cluster = this.target.getCluster();
                     if (cluster == null) {
+                        c = this.createCluster(world, min, max);
                         FMLCommonHandler.instance().bus().register(c);
                         this.updateTiles(c, world, min, max);
 
