@@ -152,10 +152,10 @@ public class TickHandler {
         }
         if (bool) {
             AELog.error(
-                "[AppEng_Patch] I get Chunk Loaded event At x:%d z:%d. %d ticks",
-                load.getChunk().xPosition,
-                load.getChunk().zPosition,
-                load.getChunk().worldObj.getWorldTime());
+                    "[AppEng_Patch] I get Chunk Loaded event At x:%d z:%d. %d ticks",
+                    load.getChunk().xPosition,
+                    load.getChunk().zPosition,
+                    load.getChunk().worldObj.getWorldTime());
         }
     }
 
