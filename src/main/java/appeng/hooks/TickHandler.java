@@ -143,6 +143,7 @@ public class TickHandler {
 
     @SubscribeEvent
     public void onChunkLoad(final ChunkEvent.Load load) {
+        AELog.error("[AppEng_Patch] I get Chunk Loaded event. %d ticks", load.getChunk().worldObj.getWorldTime())
         for (final Object te : load.getChunk().chunkTileEntityMap.values()) {
             if (te instanceof AEBaseTile) {
                 ((AEBaseTile) te).onChunkLoad();
