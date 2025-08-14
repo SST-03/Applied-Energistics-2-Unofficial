@@ -143,11 +143,19 @@ public class TickHandler {
 
     @SubscribeEvent
     public void onChunkLoad(final ChunkEvent.Load load) {
-        AELog.error("[AppEng_Patch] I get Chunk Loaded event. %d ticks", load.getChunk().worldObj.getWorldTime());
+        boolean bool = false;
         for (final Object te : load.getChunk().chunkTileEntityMap.values()) {
             if (te instanceof AEBaseTile) {
                 ((AEBaseTile) te).onChunkLoad();
+                bool = true;
             }
+        }
+        if (bool) {
+            AELog.error(
+                "[AppEng_Patch] I get Chunk Loaded event At x:%d z:%d. %d ticks",
+                load.getChunk().xPosition,
+                load.getChunk().zPosition,
+                load.getChunk().worldObj.getWorldTime());
         }
     }
 
