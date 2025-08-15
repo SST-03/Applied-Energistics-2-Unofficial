@@ -70,19 +70,16 @@ public abstract class MBCalculator {
                     }
 
                     boolean updateGrid = false;
-                    IAECluster c;
-                    final IAECluster cluster = this.target.getCluster();
+                    IAECluster cluster = this.target.getCluster();
                     if (cluster == null) {
-                        c = this.createCluster(world, min, max);
-                        FMLCommonHandler.instance().bus().register(c);
-                        this.updateTiles(c, world, min, max);
+                        cluster = this.createCluster(world, min, max);
+                        FMLCommonHandler.instance().bus().register(cluster);
+                        this.updateTiles(cluster, world, min, max);
 
                         updateGrid = true;
-                    } else {
-                        c = cluster;
                     }
 
-                    c.updateStatus(updateGrid);
+                    cluster.updateStatus(updateGrid);
                     return;
                 }
             }
