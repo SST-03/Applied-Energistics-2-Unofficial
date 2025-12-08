@@ -13,9 +13,11 @@ package appeng.client.gui.implementations;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import net.minecraft.client.gui.GuiButton;
@@ -37,7 +39,7 @@ import appeng.api.config.ViewItems;
 import appeng.api.config.YesNo;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
-import appeng.api.util.DimensionalCoord;
+import appeng.api.util.NamedDimensionalCoord;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.IGuiTooltipHandler;
 import appeng.client.gui.widgets.GuiAeButton;
@@ -54,6 +56,7 @@ import appeng.core.AELog;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
+import appeng.core.localization.Localization;
 import appeng.core.localization.PlayerMessages;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketCraftingItemInterface;
@@ -85,6 +88,11 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
     private static final int CANCEL_TOP_OFFSET = 25;
     private static final int CANCEL_HEIGHT = 20;
     private static final int CANCEL_WIDTH = 50;
+
+    private static final int SUSPEND_LEFT_OFFSET = 60;
+    private static final int SUSPEND_TOP_OFFSET = 25;
+    private static final int SUSPEND_HEIGHT = 20;
+    private static final int SUSPEND_WIDTH = 50;
 
     private static final int TITLE_TOP_OFFSET = 7;
     private static final int TITLE_LEFT_OFFSET = 8;
@@ -171,6 +179,7 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
 
     protected List<IAEItemStack> visual = new ArrayList<>();
     private GuiButton cancel;
+    private GuiAeButton suspend;
     protected List<IAEItemStack> visualHiddenStored = new ArrayList<>();
     protected GuiImgButton toggleHideStored;
     protected boolean hideStored;
@@ -218,6 +227,12 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
             } catch (final IOException e) {
                 AELog.debug(e);
             }
+        } else if (this.suspend == btn) {
+            try {
+                NetworkHandler.instance.sendToServer(new PacketValueConfig("TileCrafting.Suspend", "Suspend"));
+            } catch (final IOException e) {
+                AELog.debug(e);
+            }
         } else if (this.toggleHideStored == btn) {
             this.hideStored ^= true;
             AEConfig.instance.getConfigManager().putSetting(Settings.HIDE_STORED, hideStored ? YesNo.YES : YesNo.NO);
@@ -250,18 +265,25 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
             NBTTagCompound data = Platform.openNbtData(this.hoveredNbtStack);
             // when using the highlight feature in the crafting GUI we want to show all the interfaces
             // that currently received items so the player can see if the items are processed properly
-            BlockPosHighlighter.highlightBlocks(
+            List<NamedDimensionalCoord> ndcl = NamedDimensionalCoord.readAsListFromNBTNamed(data);
+            Map<NamedDimensionalCoord, String[]> ndcm = new HashMap<>();
+            for (NamedDimensionalCoord ndc : ndcl) {
+                ndcm.put(
+                        ndc,
+                        new String[] { PlayerMessages.MachineHighlightedNamed.getUnlocalized(),
+                                PlayerMessages.MachineInOtherDimNamed.getUnlocalized() });
+            }
+            BlockPosHighlighter.highlightNamedBlocks(
                     mc.thePlayer,
-                    DimensionalCoord.readAsListFromNBT(data),
-                    PlayerMessages.InterfaceHighlighted.getUnlocalized(),
-                    PlayerMessages.InterfaceInOtherDim.getUnlocalized());
+                    ndcm,
+                    ((Localization) () -> "tile.appliedenergistics2.BlockInterface.name").getLocal());
             mc.thePlayer.closeScreen();
         } else if (hoveredAEStack != null && btn == 2) {
             ((AEBaseContainer) inventorySlots).setTargetStack(hoveredAEStack);
             final PacketInventoryAction p = new PacketInventoryAction(
                     InventoryAction.AUTO_CRAFT,
                     inventorySlots.inventorySlots.size(),
-                    0);
+                    hoveredAEStack.getStackSize());
             NetworkHandler.instance.sendToServer(p);
         }
         super.mouseClicked(xCoord, yCoord, btn);
@@ -279,6 +301,14 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
                 CANCEL_WIDTH,
                 CANCEL_HEIGHT,
                 GuiText.Cancel.getLocal());
+        this.suspend = new GuiAeButton(
+                1,
+                this.guiLeft + SUSPEND_LEFT_OFFSET,
+                this.guiTop + this.ySize - SUSPEND_TOP_OFFSET,
+                SUSPEND_WIDTH,
+                SUSPEND_HEIGHT,
+                GuiText.Suspend.getLocal(),
+                ButtonToolTips.Suspend.getLocal());
         this.toggleHideStored = new GuiImgButton(
                 this.guiLeft + 221,
                 this.guiTop + this.ySize - 19,
@@ -286,6 +316,7 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
                 AEConfig.instance.getConfigManager().getSetting(Settings.HIDE_STORED));
         this.buttonList.add(this.toggleHideStored);
         this.buttonList.add(this.cancel);
+        this.buttonList.add(this.suspend);
 
         this.searchField = new MEGuiTextField(52, 12, "Search") {
 
@@ -340,6 +371,8 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
     @Override
     public void drawScreen(final int mouseX, final int mouseY, final float btn) {
         this.cancel.enabled = !this.visual.isEmpty();
+        this.suspend.visible = !this.visual.isEmpty();
+        this.updateSuspendButtonText();
         this.changeAllow.set(CraftingAllow.values()[this.craftingCpu.allow]);
 
         final int gx = (this.width - this.xSize) / 2;
@@ -634,20 +667,21 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
                 } catch (Exception ignored) {}
             } else {
                 NBTTagCompound data = Platform.openNbtData(this.hoveredNbtStack);
-                List<DimensionalCoord> blocks = DimensionalCoord.readAsListFromNBT(data);
+                List<NamedDimensionalCoord> blocks = NamedDimensionalCoord.readAsListFromNBTNamed(data);
 
                 ScheduledReason sr = ScheduledReason.values()[data.getInteger("ScheduledReason")];
                 if (sr != ScheduledReason.UNDEFINED) lineList.add(sr.getLocal());
 
                 if (blocks.isEmpty()) return;
-                for (DimensionalCoord blockPos : blocks) {
+                for (NamedDimensionalCoord blockPos : blocks) {
                     lineList.add(
                             String.format(
-                                    "Dim:%s X:%s Y:%s Z:%s",
+                                    "Dim:%s X:%s Y:%s Z:%s \"%s\"",
                                     blockPos.getDimension(),
                                     blockPos.x,
                                     blockPos.y,
-                                    blockPos.z));
+                                    blockPos.z,
+                                    blockPos.getCustomName()));
                 }
                 lineList.add(GuiText.HoldShiftClick_HIGHLIGHT_INTERFACE.getLocal());
             }
@@ -818,5 +852,11 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource, IGuiToolti
                 }
             }
         }
+    }
+
+    private void updateSuspendButtonText() {
+        var suspended = this.craftingCpu.cachedSuspend;
+        this.suspend.displayString = suspended ? GuiText.Resume.getLocal() : GuiText.Suspend.getLocal();
+        this.suspend.setTootipString(suspended ? ButtonToolTips.Resume.getLocal() : ButtonToolTips.Suspend.getLocal());
     }
 }

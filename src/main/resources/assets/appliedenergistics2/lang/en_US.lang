@@ -122,7 +122,7 @@ chat.appliedenergistics2.LevelEmitterInAnotherDim=Level emitter located in dimen
 chat.appliedenergistics2.LevelEmitterHighlighted=The level emitter is now highlighted at %d, %d, %d
 chat.appliedenergistics2.P2PInAnotherDim=P2P located in dimension: %d and cant be highlighted
 chat.appliedenergistics2.P2PHighlighted=The P2P is now highlighted at %d, %d, %d
-chat.appliedenergistics2.CraftingItemsWentMissing=Could not start craft, ingredient went missing: %d * %s
+chat.appliedenergistics2.CraftingItemsWentMissing=Missing ingredient: %d * %s
 chat.appliedenergistics2.FBOUnsupported=OpenGL FBOs not supported, cannot export image
 chat.appliedenergistics2.PriorityInvalidTarget=Target has no priority
 chat.appliedenergistics2.PriorityReadout=Current priority is %d
@@ -130,9 +130,11 @@ chat.appliedenergistics2.PriorityConfigured=Updated priority to %d
 chat.appliedenergistics2.DriveLockingToggled=Cells in drive were partitioned/unpartitioned
 chat.appliedenergistics2.ChestLockingToggled=Cell in chest was partitioned/unpartitioned
 chat.appliedenergistics2.FinishCraftingRemind=Crafting of %s * %s finished in %s.
-chat.appliedenergistics2.CraftingCantExtract=Can't extract required amount of ingredient from storage: %d / %d | %s
+chat.appliedenergistics2.CraftingCantExtract=Can't extract ingredient: %d / %d | %s
 chat.appliedenergistics2.MachineInOtherDim=%d located in dimension: %d and cant be highlighted
+chat.appliedenergistics2.MachineInOtherDimNamed=%d "%s" located in dimension: %d and cant be highlighted
 chat.appliedenergistics2.MachineHighlighted=The %d is now highlighted at %d, %d, %d
+chat.appliedenergistics2.MachineHighlightedNamed=The %d "%d" is now highlighted at %d, %d, %d
 chat.appliedenergistics2.StorageHighlighted=The %d containing %d %d is now highlighted at %d, %d, %d
 chat.appliedenergistics2.StorageInOtherDim=%d containing %d %d is located in dimension: %d and cant be highlighted
 
@@ -228,6 +230,9 @@ gui.appliedenergistics2.IOBuses=ME Import/Export Bus
 gui.appliedenergistics2.Stores=Stores
 gui.appliedenergistics2.BytesUsed=Bytes Used
 gui.appliedenergistics2.TimeUsed=Time Used
+gui.appliedenergistics2.CraftName=Craft Name
+gui.appliedenergistics2.Remains=Remains
+gui.appliedenergistics2.Progress=Progress
 gui.appliedenergistics2.Types=Types
 gui.appliedenergistics2.Blank=Blank
 gui.appliedenergistics2.Unlinked=Unlinked
@@ -273,6 +278,8 @@ gui.appliedenergistics2.Empty=Empty
 gui.appliedenergistics2.Stored=Stored
 gui.appliedenergistics2.AddToBookmark=Bookmark
 gui.appliedenergistics2.Cancel=Cancel
+gui.appliedenergistics2.Suspend=Suspend
+gui.appliedenergistics2.Resume=Resume
 gui.appliedenergistics2.ETAFormat=HH:mm:ss
 gui.appliedenergistics2.SwitchCraftingSimulationDisplayMode=Switch display mode (List/Tree)
 gui.appliedenergistics2.Crafting=Crafting
@@ -336,8 +343,15 @@ gui.appliedenergistics2.HoldShiftClick_HIGHLIGHT_INTERFACE=Hold shift click to h
 gui.appliedenergistics2.Nothing=Nothing
 gui.appliedenergistics2.VoidCellTooltip=Deletes §4everything§7 stored on it
 gui.appliedenergistics2.CellView=Cell View
+gui.appliedenergistics2.Inputs=Inputs
+gui.appliedenergistics2.Outputs=Outputs
+gui.appliedenergistics2.EncodedPattern=Encoded Pattern
 gui.appliedenergistics2.Deprecated=Deprecated, will be removed soon!
 gui.appliedenergistics2.ViewCellToggleKey=Right-click to toggle
+gui.appliedenergistics2.CPUAllowMode=Accept request
+gui.appliedenergistics2.CPUAllowAll=All
+gui.appliedenergistics2.CPUOnlyAllowNonPlayer=Only from non-player
+gui.appliedenergistics2.CPUOnlyAllowPlayer=Only from player
 
 gui.appliedenergistics2.NetworkBytesDetails=Network Bytes Details
 gui.appliedenergistics2.Items=Items
@@ -392,6 +406,8 @@ gui.tooltips.appliedenergistics2.Encode=Encode Pattern
 gui.tooltips.appliedenergistics2.EncodeDescription=Write the entered pattern to the current encoded pattern, or to available blank pattern. Hold Shift to transfer directly to your inventory. Hold Shift+Control to encode whole stack.
 
 gui.tooltips.appliedenergistics2.FuzzyMode=Fuzzy Comparison
+gui.tooltips.appliedenergistics2.FZPercent_1=Split Damage at 1%
+gui.tooltips.appliedenergistics2.FZPercent_10=Split Damage at 10%
 gui.tooltips.appliedenergistics2.FZPercent_25=Split Damage at 25%
 gui.tooltips.appliedenergistics2.FZPercent_50=Split Damage at 50%
 gui.tooltips.appliedenergistics2.FZPercent_75=Split Damage at 75%
@@ -539,7 +555,7 @@ gui.tooltips.appliedenergistics2.SidelessModeSideless=Sideless Mode
 gui.tooltips.appliedenergistics2.SidelessModeSidelessDesc=All fluids are accessible from all sides
 
 gui.tooltips.appliedenergistics2.AdvancedBlockingModeDefault=Default Blocking Mode
-gui.tooltips.appliedenergistics2.AdvancedBlockingModeDefaultDesc=Blocking interfaces follow follow normal blocking rules (ignore circuits, etc.)
+gui.tooltips.appliedenergistics2.AdvancedBlockingModeDefaultDesc=Blocking interfaces follow normal blocking rules (ignore circuits, etc.)
 gui.tooltips.appliedenergistics2.AdvancedBlockingModeAll=Loose Mode
 gui.tooltips.appliedenergistics2.AdvancedBlockingModeAllDesc=Blocking interfaces will block on any item in this ME system.
 
@@ -588,6 +604,9 @@ gui.tooltips.appliedenergistics2.CPUAllowMode=Crafting requests limitation
 gui.tooltips.appliedenergistics2.CPUAllowAllDesc=Allow all crafting requests
 gui.tooltips.appliedenergistics2.CPUOnlyAllowPlayerDesc=Only allow crafting requests from player
 gui.tooltips.appliedenergistics2.CPUOnlyAllowNonPlayerDesc=Only allow crafting requests from non-player
+
+gui.tooltips.appliedenergistics2.Suspend=Click to stop this CPU from sending out crafts
+gui.tooltips.appliedenergistics2.Resume=Click to make this CPU send out crafts again
 
 gui.tooltips.appliedenergistics2.PinsSection=Pins Section
 gui.tooltips.appliedenergistics2.PinsSectionActive=Pins Section Enabled
@@ -640,6 +659,7 @@ waila.appliedenergistics2.Unlocked=Unlocked
 waila.appliedenergistics2.Showing=Showing
 waila.appliedenergistics2.Contains=Contains
 waila.appliedenergistics2.Channels=%1$d of %2$d Channels
+waila.appliedenergistics2.ChannelsUnbound=%1$d Channels
 waila.appliedenergistics2.P2PUnlinked=Unlinked
 waila.appliedenergistics2.P2PInputOneOutput=Linked (Input Side)
 waila.appliedenergistics2.P2PInputManyOutputs=Linked (Input Side) - %d Outputs
@@ -649,6 +669,17 @@ waila.appliedenergistics2.CraftingLockedByLackOfRedstoneSignal=Locked by lack of
 waila.appliedenergistics2.CraftingLockedByRedstoneSignal=Locked by redstone signal
 waila.appliedenergistics2.CraftingLockedUntilPulse=Waiting for redstone pulse to unlock
 waila.appliedenergistics2.CraftingLockedUntilResult=Waiting for results to unlock
+waila.appliedenergistics2.CoordinateX=X
+waila.appliedenergistics2.CoordinateY=Y
+waila.appliedenergistics2.CoordinateZ=Z
+waila.appliedenergistics2.Dimension=Dimension
+waila.appliedenergistics2.Id=id
+waila.appliedenergistics2.ConnectedTo=Connected to
+waila.appliedenergistics2.Disconnected=Disconnected
+waila.appliedenergistics2.Singularity=Singularity
+
+# Baubles Extended
+slot.Terminal=§aTerminal§7
 
 # Items
 item.appliedenergistics2.ItemBasicStorageCell.1k.name=§61k§r ME Storage Cell
@@ -666,6 +697,7 @@ item.appliedenergistics2.ItemExtremeStorageCell.Universe.name=Artificial Univers
 item.appliedenergistics2.ItemCreativeStorageCell.name=Creative ME Storage Cell
 item.appliedenergistics2.ItemVoidStorageCell.name=Void ME Storage Cell
 item.appliedenergistics2.ItemEncodedPattern.name=Encoded Pattern
+item.appliedenergistics2.ItemEncodedUltimatePattern.name=Encoded Ultimate Pattern
 item.appliedenergistics2.ItemViewCell.name=View Cell
 item.appliedenergistics2.ItemFacade.name=Cable Facade
 

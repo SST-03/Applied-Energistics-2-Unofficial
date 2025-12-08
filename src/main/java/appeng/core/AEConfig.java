@@ -27,6 +27,7 @@ import appeng.api.config.CraftingStatus;
 import appeng.api.config.PinsState;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.config.PowerUnits;
+import appeng.api.config.SearchBoxFocusPriority;
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
@@ -119,6 +120,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int maxCraftingSteps = 2_000_000;
     public int maxCraftingTreeVisualizationSize = 32 * 1024 * 1024; // 32 MiB
     public boolean limitCraftingCPUSpill = true;
+    public SearchBoxFocusPriority searchBoxFocusPriority = SearchBoxFocusPriority.NEVER;
 
     public int maxRecursiveDepth = 100;
     public int maxMachineChecks = 10000;
@@ -167,6 +169,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.settings.registerSetting(Settings.TERMINAL_FONT_SIZE, TerminalFontSize.SMALL);
         this.settings.registerSetting(Settings.INTERFACE_TERMINAL_SECTION_ORDER, StringOrder.NATURAL);
         this.settings.registerSetting(Settings.PINS_STATE, PinsState.DISABLED);
+        this.settings.registerSetting(Settings.PAUSE_WHEN_HOLDING_SHIFT, YesNo.YES);
 
         this.spawnChargedChance = (float) (1.0
                 - this.get("worldGen", "spawnChargedChance", 1.0 - this.spawnChargedChance)
@@ -285,6 +288,17 @@ public final class AEConfig extends Configuration implements IConfigurableObject
             if (version.contains(imb.getVersion())) {
                 this.featureFlags.remove(AEFeature.AlphaPass);
             }
+        }
+
+        try {
+            this.searchBoxFocusPriority = SearchBoxFocusPriority.valueOf(
+                    this.get(
+                            "Client",
+                            "SearchBoxFocusPriority",
+                            this.searchBoxFocusPriority.name(),
+                            this.getListComment(this.searchBoxFocusPriority)).getString());
+        } catch (final Throwable t) {
+            this.searchBoxFocusPriority = SearchBoxFocusPriority.NEVER;
         }
 
         try {

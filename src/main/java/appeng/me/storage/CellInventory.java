@@ -39,7 +39,6 @@ import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
-import appeng.core.AELog;
 import appeng.util.IterationCounter;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
@@ -211,10 +210,7 @@ public class CellInventory implements ICellInventory {
             }
         }
 
-        if (input.isCraftable()) {
-            AELog.error(
-                    new Throwable(),
-                    "FATAL: DETECTED ILLEGAL ITEM TO BE INSERTED ON STORAGE CELL, PLEASE REPORT ON GITHUB! STACKTRACE:");
+        if (mode == Actionable.MODULATE && input.isCraftable()) {
             input.setCraftable(false);
         }
 
@@ -264,7 +260,7 @@ public class CellInventory implements ICellInventory {
                 remainingItemCount = this.getRemainingItemsCountDist(null);
             } else {
                 if (restrictionLong > 0) {
-                    remainingItemCount = restrictionLong;
+                    remainingItemCount = this.getRemainingItemCount();
                 } else {
                     remainingItemCount = this.getRemainingItemCount() - this.getBytesPerType() * 8L;
                 }
@@ -519,6 +515,7 @@ public class CellInventory implements ICellInventory {
 
         return (bytesFree > this.getBytesPerType()
                 || (bytesFree == this.getBytesPerType() && this.getUnusedItemCount() > 0))
+                && (restrictionLong <= 0 || restrictionLong > getStoredItemCount())
                 && this.getRemainingItemTypes() > 0;
     }
 

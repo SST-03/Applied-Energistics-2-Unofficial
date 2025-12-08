@@ -32,12 +32,15 @@ import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
+import appeng.api.storage.IMENetworkInventory;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.storage.ItemWatcher;
 import appeng.util.IterationCounter;
 import appeng.util.item.LazyItemList;
+import appeng.util.item.NetworkItemList;
+import appeng.util.item.PrioritizedNetworkItemList;
 
 public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
 
@@ -107,6 +110,11 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
     }
 
     @Override
+    public PrioritizedNetworkItemList<T> getAvailableItemsWithPriority(int iteration) {
+        return this.getHandler().getAvailableItemsWithPriority(iteration);
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return this.getHandler().getChannel();
     }
@@ -127,7 +135,13 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
         if (this.hasChanged) {
             this.hasChanged = false;
             this.cachedList.resetStatus();
-            return this.getAvailableItems(this.cachedList, IterationCounter.fetchNewId());
+            final IItemList<T> ret = this.getAvailableItems(this.cachedList, IterationCounter.fetchNewId());
+            if (ret instanceof NetworkItemList) {
+                for (T item : ret) {
+                    this.cachedList.add(item);
+                }
+            }
+            return this.cachedList;
         }
 
         return this.cachedList;
@@ -163,6 +177,16 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
     @Override
     public boolean validForPass(final int i) {
         return this.getHandler().validForPass(i);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public IMENetworkInventory<T> getExternalNetworkInventory() {
+        IMEInventoryHandler<T> handler = this.getHandler();
+        if (handler instanceof IMENetworkInventory<?>networkInventory) {
+            return (IMENetworkInventory<T>) networkInventory;
+        }
+        return handler.getExternalNetworkInventory();
     }
 
     @Nullable

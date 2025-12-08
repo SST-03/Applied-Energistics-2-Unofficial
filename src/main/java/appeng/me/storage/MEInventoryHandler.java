@@ -21,6 +21,7 @@ import appeng.api.config.StorageFilter;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.IMENetworkInventory;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
@@ -206,6 +207,10 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
         return false;
     }
 
+    public boolean isPreformatted() {
+        return !getPartitionList().isEmpty();
+    }
+
     @Override
     public boolean canAccept(final T input) {
         if (!this.hasWriteAccess) {
@@ -245,6 +250,16 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
         return isSticky || this.internal.getSticky();
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public IMENetworkInventory<T> getExternalNetworkInventory() {
+        if (internal instanceof IMENetworkInventory<?>networkInventory) {
+            return (IMENetworkInventory<T>) networkInventory;
+        }
+        return this.internal.getExternalNetworkInventory();
+    }
+
+    @Override
     public IMEInventory<T> getInternal() {
         return this.internal;
     }

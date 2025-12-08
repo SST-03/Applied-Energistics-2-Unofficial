@@ -32,7 +32,7 @@ import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.networking.storage.IBaseMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.container.AEBaseContainer;
 import appeng.container.guisync.GuiSync;
@@ -49,9 +49,9 @@ import appeng.tile.crafting.TileCraftingTile;
 import appeng.util.Platform;
 
 public class ContainerCraftingCPU extends AEBaseContainer
-        implements IMEMonitorHandlerReceiver<IAEItemStack>, ICustomNameObject {
+        implements IMEMonitorHandlerReceiver<IAEStack<?>>, ICustomNameObject {
 
-    private final IItemList<IAEItemStack> list = AEApi.instance().storage().createItemList();
+    private final IItemList<IAEStack<?>> list = AEApi.instance().storage().createAEStackList();
     private IGrid network;
     private CraftingCPUCluster monitor = null;
     private String cpuName = null;
@@ -61,6 +61,9 @@ public class ContainerCraftingCPU extends AEBaseContainer
 
     @GuiSync(1)
     public int allow = 0;
+
+    @GuiSync(2)
+    public boolean cachedSuspend;
 
     public ContainerCraftingCPU(final InventoryPlayer ip, final Object te) {
         super(ip, te);
@@ -115,7 +118,7 @@ public class ContainerCraftingCPU extends AEBaseContainer
             this.cpuName = c.getName();
             this.setMonitor((CraftingCPUCluster) c);
             this.list.resetStatus();
-            this.getMonitor().getListOfItem(this.list, CraftingItemList.ALL);
+            this.getMonitor().getModernListOfItem(this.list, CraftingItemList.ALL);
             this.getMonitor().addListener(this, null);
             this.setElapsedTime(0);
             this.allow = this.getMonitor().getCraftingAllowMode().ordinal();
@@ -176,6 +179,7 @@ public class ContainerCraftingCPU extends AEBaseContainer
     public void detectAndSendChanges() {
         if (Platform.isServer() && this.getMonitor() != null && !this.list.isEmpty()) {
             try {
+                this.cachedSuspend = this.monitor.isSuspended();
                 this.setElapsedTime(this.getMonitor().getElapsedTime());
 
                 NBTTagCompound nbttc = new NBTTagCompound();
@@ -195,7 +199,7 @@ public class ContainerCraftingCPU extends AEBaseContainer
 
                 final PacketCompressedNBT d = new PacketCompressedNBT(nbttc);
 
-                for (final IAEItemStack out : this.list) {
+                for (final IAEStack<?> out : this.list) {
                     a.appendItem(this.getMonitor().getItemStack(out, CraftingItemList.STORAGE));
                     b.appendItem(this.getMonitor().getItemStack(out, CraftingItemList.ACTIVE));
                     c.appendItem(this.getMonitor().getItemStack(out, CraftingItemList.PENDING));
@@ -237,9 +241,9 @@ public class ContainerCraftingCPU extends AEBaseContainer
     }
 
     @Override
-    public void postChange(final IBaseMonitor<IAEItemStack> monitor, final Iterable<IAEItemStack> change,
+    public void postChange(final IBaseMonitor<IAEStack<?>> monitor, final Iterable<IAEStack<?>> change,
             final BaseActionSource actionSource) {
-        for (IAEItemStack is : change) {
+        for (IAEStack<?> is : change) {
             is = is.copy();
             is.setStackSize(1);
             this.list.add(is);
@@ -314,5 +318,12 @@ public class ContainerCraftingCPU extends AEBaseContainer
             return this.getMonitor().getCraftingAllowMode();
         }
         return null;
+    }
+
+    public void suspendCrafting() {
+        if (this.getMonitor() != null) {
+            this.cachedSuspend = !this.cachedSuspend;
+            this.monitor.setSuspended(this.cachedSuspend);
+        }
     }
 }

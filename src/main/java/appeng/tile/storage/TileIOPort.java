@@ -10,6 +10,7 @@
 
 package appeng.tile.storage;
 
+import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.block.Block;
@@ -99,6 +100,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
     private final BaseActionSource mySrc;
 
     private YesNo lastRedstoneState;
+    private boolean pendingRedstonePulse;
     private ItemStack currentCell;
     private IMEInventory<IAEFluidStack> cachedFluid;
     private IMEInventory<IAEItemStack> cachedItem;
@@ -113,6 +115,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         this.manager.registerSetting(Settings.OPERATION_MODE, OperationMode.EMPTY);
         this.cells = new AppEngInternalInventory(this, 12);
         this.mySrc = new MachineSource(this);
+        this.pendingRedstonePulse = false;
         this.lastRedstoneState = YesNo.UNDECIDED;
 
         final Block ioPortBlock = AEApi.instance().definitions().blocks().iOPort().maybeBlock().get();
@@ -174,6 +177,9 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
                 ? YesNo.YES
                 : YesNo.NO;
         if (this.lastRedstoneState != currentState) {
+            // When setting this directly instead of using the OR operation, it was found that a one-tick redstone pulse
+            // would turn off this flag before items were transferred.
+            this.pendingRedstonePulse |= currentState == YesNo.YES;
             this.lastRedstoneState = currentState;
             this.updateTask();
         }
@@ -193,6 +199,9 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         }
 
         final RedstoneMode rs = (RedstoneMode) this.manager.getSetting(Settings.REDSTONE_CONTROLLED);
+        if (rs == RedstoneMode.IGNORE || rs == RedstoneMode.SIGNAL_PULSE) {
+            return true;
+        }
         if (rs == RedstoneMode.HIGH_SIGNAL) {
             return this.getRedstoneState();
         }
@@ -299,6 +308,13 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         if (!this.getProxy().isActive()) {
             return TickRateModulation.IDLE;
         }
+        final RedstoneMode rs = (RedstoneMode) this.manager.getSetting(Settings.REDSTONE_CONTROLLED);
+        if (rs == RedstoneMode.SIGNAL_PULSE && !this.pendingRedstonePulse) {
+            return TickRateModulation.IDLE;
+        }
+        // Turns off pulsed output after this tick, to account for redstone pulses longer than one tick.
+        // This is because updateRedstoneState does not get changed if the signal stays on.
+        this.pendingRedstonePulse = false;
 
         long ItemsToMove = 256;
 
@@ -329,8 +345,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
             for (int x = 0; x < 6; x++) {
                 final ItemStack is = this.cells.getStackInSlot(x);
                 if (is != null) {
-                    if ((FullnessMode) this.manager.getSetting(Settings.FULLNESS_MODE) != FullnessMode.HALF
-                            && moveQueue[x] == 1) {
+                    if (this.manager.getSetting(Settings.FULLNESS_MODE) != FullnessMode.HALF && moveQueue[x] == 1) {
                         moveQueue[x] = !this.moveSlot(x) ? 1 : 0;
                     } else {
                         if (ItemsToMove > 0) {
@@ -438,11 +453,12 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 
     private long transferContents(final IEnergySource energy, final IMEInventory src, final IMEInventory destination,
             long itemsToMove, final StorageChannel chan) {
-        final IItemList<? extends IAEStack> myList;
+        final Iterator<? extends IAEStack> it;
         if (src instanceof IMEMonitor) {
-            myList = ((IMEMonitor) src).getStorageList();
+            it = ((IMEMonitor) src).getAvailableItemsWithPriority(IterationCounter.fetchNewId()).getItems(true)
+                    .distinct().iterator();
         } else {
-            myList = src.getAvailableItems(src.getChannel().createList(), IterationCounter.fetchNewId());
+            it = src.getAvailableItems(src.getChannel().createList(), IterationCounter.fetchNewId()).iterator();
         }
 
         boolean didStuff;
@@ -450,24 +466,24 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         do {
             didStuff = false;
 
-            for (final IAEStack s : myList) {
-                final long totalStackSize = s.getStackSize();
-                if (totalStackSize > 0) {
-                    final IAEStack stack = destination
-                            .injectItems(s.setCraftable(false), Actionable.SIMULATE, this.mySrc);
+            while (it.hasNext()) {
+                final IAEStack s = it.next();
+                if (s.getStackSize() > 0) {
+                    final IAEStack extractStack = s.copy();
+                    extractStack.setStackSize(itemsToMove);
+                    final IAEStack stack = destination.injectItems(extractStack, Actionable.SIMULATE, this.mySrc);
 
                     long possible = 0;
                     if (stack == null) {
-                        possible = totalStackSize;
+                        possible = itemsToMove;
                     } else {
-                        possible = totalStackSize - stack.getStackSize();
+                        possible = itemsToMove - stack.getStackSize();
                     }
 
                     if (possible > 0) {
-                        possible = Math.min(possible, itemsToMove);
-                        s.setStackSize(possible);
+                        extractStack.setStackSize(possible);
 
-                        final IAEStack extracted = src.extractItems(s, Actionable.MODULATE, this.mySrc);
+                        final IAEStack extracted = src.extractItems(extractStack, Actionable.MODULATE, this.mySrc);
                         if (extracted != null) {
                             possible = extracted.getStackSize();
                             final IAEStack failed = Platform
@@ -548,7 +564,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         final IAEStack test = myList.getFirstItem();
         if (test != null) {
             test.setStackSize(1);
-            return src.injectItems(test.setCraftable(false), Actionable.SIMULATE, this.mySrc) != null;
+            return src.injectItems(test, Actionable.SIMULATE, this.mySrc) != null;
         } else if (om == OperationMode.EMPTY) {
             // If emptying into network and mode is set to "Move on full", move when network is full
             return didWork;

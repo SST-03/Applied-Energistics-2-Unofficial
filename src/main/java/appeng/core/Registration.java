@@ -456,6 +456,7 @@ public final class Registration {
         target.itemCellCreative = this.converter.of(source.cellCreative());
         target.itemViewCell = this.converter.of(source.viewCell());
         target.itemEncodedPattern = this.converter.of(source.encodedPattern());
+        target.itemEncodedUltimatePattern = converter.of(source.encodedUltimatePattern());
 
         target.itemCell1k = this.converter.of(source.cell1k());
         target.itemCell4k = this.converter.of(source.cell4k());
@@ -639,6 +640,8 @@ public final class Registration {
         Upgrades.REDSTONE.registerItem(parts.importBus(), 1);
         Upgrades.CAPACITY.registerItem(parts.importBus(), 2);
         Upgrades.SPEED.registerItem(parts.importBus(), 4);
+        Upgrades.SUPERSPEED.registerItem(parts.importBus(), 4);
+        Upgrades.SUPERLUMINALSPEED.registerItem(parts.importBus(), 4);
         Upgrades.ORE_FILTER.registerItem(parts.importBus(), 1);
 
         // Export Bus
@@ -646,6 +649,8 @@ public final class Registration {
         Upgrades.REDSTONE.registerItem(parts.exportBus(), 1);
         Upgrades.CAPACITY.registerItem(parts.exportBus(), 2);
         Upgrades.SPEED.registerItem(parts.exportBus(), 4);
+        Upgrades.SUPERSPEED.registerItem(parts.exportBus(), 4);
+        Upgrades.SUPERLUMINALSPEED.registerItem(parts.exportBus(), 4);
         Upgrades.CRAFTING.registerItem(parts.exportBus(), 1);
         Upgrades.ORE_FILTER.registerItem(parts.exportBus(), 1);
 

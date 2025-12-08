@@ -46,6 +46,9 @@ public enum GuiText implements Localization {
     Types,
     QuantumLinkChamber,
     PortableCell,
+    CraftName,
+    Remains,
+    Progress,
 
     NetworkTool,
     AdvancedNetworkTool,
@@ -152,6 +155,8 @@ public enum GuiText implements Localization {
     RemainingOperations,
     AddToBookmark,
     Cancel,
+    Suspend,
+    Resume,
     ETA,
     ETAFormat,
     SwitchCraftingSimulationDisplayMode,
@@ -272,7 +277,15 @@ public enum GuiText implements Localization {
     FluidsPerByte,
     BytesPerType,
 
-    CellView;
+    CellView,
+    EncodedPattern,
+
+    Inputs,
+    Outputs,
+    CPUAllowMode,
+    CPUAllowAll,
+    CPUOnlyAllowNonPlayer,
+    CPUOnlyAllowPlayer;
 
     private final String root;
 
